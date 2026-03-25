@@ -221,7 +221,290 @@
             }
         }
 
-        // Re-acquire wake lock when the user switches back to this tab (if active)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Universal Instrument Tuner</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --panel-bg: #1e1e1e;
+            --control-bg: #2c2c2c;
+            --text-color: #ffffff;
+            --accent-color: #f39c12;
+            --in-tune-color: #2ecc71;
+            --flat-color: #3498db;
+            --sharp-color: #e74c3c;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .tuner-container {
+            background-color: var(--panel-bg);
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 380px;
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            color: var(--accent-color);
+            letter-spacing: 0.5px;
+            margin-bottom: 1.5rem;
+        }
+
+        .settings-panel {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+            background: var(--control-bg);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .setting-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+
+        .setting-group label {
+            font-size: 0.75rem;
+            color: #aaa;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        select {
+            background-color: var(--panel-bg);
+            color: white;
+            border: 1px solid #444;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        select:focus {
+            border-color: var(--accent-color);
+        }
+
+        .note-display {
+            font-size: 5rem;
+            font-weight: 800;
+            margin: 0.5rem 0;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.2s ease;
+        }
+
+        .octave {
+            font-size: 1.5rem;
+            vertical-align: bottom;
+            color: #888;
+            margin-left: 4px;
+        }
+
+        .cents {
+            font-size: 1.1rem;
+            font-family: monospace;
+            color: #aaa;
+            margin-bottom: 1rem;
+        }
+
+        .meter {
+            width: 100%;
+            height: 16px;
+            background: linear-gradient(to right, var(--flat-color) 0%, #444 45%, var(--in-tune-color) 50%, #444 55%, var(--sharp-color) 100%);
+            border-radius: 8px;
+            position: relative;
+            margin: 1.5rem 0;
+        }
+
+        .needle {
+            width: 4px;
+            height: 24px;
+            background-color: white;
+            position: absolute;
+            top: -4px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+            transition: left 0.1s ease-out, background-color 0.2s;
+            box-shadow: 0 0 4px rgba(0,0,0,0.8);
+        }
+
+        .status-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 700;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+            color: white;
+        }
+        
+        .hardware-status {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tuner-container">
+        <h1>Universal Tuner</h1>
+        
+        <div class="settings-panel">
+            <div class="setting-group">
+                <label for="transposition">Instrument Key</label>
+                <select id="transposition">
+                    <option value="0">Concert (C, Flute, Piano)</option>
+                    <option value="2" selected>Bb (Trumpet, Clarinet)</option>
+                    <option value="9">Eb (Alto/Bari Sax)</option>
+                    <option value="7">F (French Horn)</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label for="dronePitch">Drone Note</label>
+                <select id="dronePitch">
+                    <option value="440">Concert A (440 Hz)</option>
+                    <option value="466.16" selected>Concert Bb (466 Hz)</option>
+                    <option value="261.63">Concert C (261 Hz)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="note-display" id="note">--</div>
+        <div class="cents" id="cents">0 cents</div>
+        
+        <div class="meter">
+            <div class="needle" id="needle"></div>
+        </div>
+        
+        <div class="status-text">
+            <span>Flat</span>
+            <span>In Tune</span>
+            <span>Sharp</span>
+        </div>
+
+        <div class="button-group">
+            <button id="startBtn">Start Tuner</button>
+            <button id="droneBtn" class="btn-secondary">Play Drone</button>
+        </div>
+        
+        <div class="hardware-status" id="hardwareStatus">Mic: Off | Screen Sleep: Default</div>
+    </div>
+
+    <script>
+        // --- App Variables ---
+        let wakeLock = null;
+
+        // --- Tuner Variables ---
+        let audioContext;
+        let analyser;
+        let microphone;
+        let mediaStream = null; 
+        let isTuning = false;
+        let animationId;
+
+        // --- Drone Variables ---
+        let droneContext;
+        let droneOscillator;
+        let droneGain;
+        let isDronePlaying = false;
+
+        // --- DOM Elements ---
+        const startBtn = document.getElementById('startBtn');
+        const droneBtn = document.getElementById('droneBtn');
+        const noteDisplay = document.getElementById('note');
+        const centsDisplay = document.getElementById('cents');
+        const needle = document.getElementById('needle');
+        const hardwareStatus = document.getElementById('hardwareStatus');
+        const transpositionSelect = document.getElementById('transposition');
+        const dronePitchSelect = document.getElementById('dronePitch');
+
+        const noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
+        // ==========================================
+        // WAKE LOCK LOGIC (Keep screen awake)
+        // ==========================================
+        async function requestWakeLock() {
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    updateHardwareStatus();
+                    wakeLock.addEventListener('release', () => {
+                        updateHardwareStatus();
+                    });
+                } catch (err) {
+                    console.error(`Wake Lock error: ${err.name}, ${err.message}`);
+                }
+            }
+        }
+
         document.addEventListener('visibilitychange', async () => {
             if (wakeLock !== null && document.visibilityState === 'visible' && (isTuning || isDronePlaying)) {
                 await requestWakeLock();
@@ -248,7 +531,6 @@
 
         async function startTuning() {
             try {
-                // Request screen to stay on
                 await requestWakeLock();
 
                 audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -277,19 +559,16 @@
             isTuning = false;
             cancelAnimationFrame(animationId);
             
-            // 1. Disconnect Audio Node
             if (audioContext) {
                 audioContext.close();
                 audioContext = null;
             }
 
-            // 2. Kill the microphone connection instantly
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
                 mediaStream = null;
             }
 
-            // 3. Release Wake Lock (if drone isn't playing)
             if (wakeLock && !isDronePlaying) {
                 wakeLock.release().then(() => wakeLock = null);
             }
@@ -297,7 +576,6 @@
             startBtn.textContent = "Start Tuner";
             startBtn.classList.remove('btn-danger');
             
-            // Reset UI
             noteDisplay.textContent = "--";
             noteDisplay.style.color = "var(--text-color)";
             centsDisplay.textContent = "0 cents";
@@ -307,7 +585,6 @@
             updateHardwareStatus();
         }
 
-        // Fast Autocorrelation for Pitch Detection
         function autoCorrelate(buf, sampleRate) {
             let SIZE = buf.length;
             let rms = 0;
@@ -370,11 +647,15 @@
                 let concertPitch = ac;
                 let concertMidiNote = noteFromPitch(concertPitch);
                 
-                // Bb Transposition
-                let trumpetMidiNote = concertMidiNote + 2;
+                // Read transposition dynamically (0 for C, +2 for Bb, etc.)
+                let transOffset = parseInt(transpositionSelect.value);
+                let instrumentMidiNote = concertMidiNote + transOffset;
                 
-                let noteName = noteStrings[trumpetMidiNote % 12];
-                let octave = Math.floor(trumpetMidiNote / 12) - 1;
+                // Keep the midi note positive just in case of extreme low notes
+                if (instrumentMidiNote < 0) instrumentMidiNote = 0;
+
+                let noteName = noteStrings[instrumentMidiNote % 12];
+                let octave = Math.floor(instrumentMidiNote / 12) - 1;
                 let cents = centsOffFromPitch(concertPitch, concertMidiNote);
                 
                 noteDisplay.innerHTML = `${noteName}<span class="octave">${octave}</span>`;
@@ -416,16 +697,14 @@
                     droneOscillator.disconnect();
                 }, 100);
                 
-                droneBtn.textContent = "Play Drone (Trumpet C)";
+                droneBtn.textContent = "Play Drone";
                 droneBtn.classList.add('btn-secondary');
                 droneBtn.classList.remove('btn-danger');
                 isDronePlaying = false;
                 
-                // Release Wake Lock if tuner is also off
                 if (!isTuning && wakeLock) {
                     wakeLock.release().then(() => wakeLock = null);
                 }
-
             } else {
                 await requestWakeLock();
 
@@ -435,7 +714,8 @@
                 droneGain = droneContext.createGain();
 
                 droneOscillator.type = 'triangle'; 
-                droneOscillator.frequency.value = 466.16; // Concert Bb4
+                // Read selected frequency
+                droneOscillator.frequency.value = parseFloat(dronePitchSelect.value);
 
                 droneGain.gain.setValueAtTime(0, droneContext.currentTime);
                 droneGain.gain.linearRampToValueAtTime(0.3, droneContext.currentTime + 0.1);
@@ -450,6 +730,13 @@
                 isDronePlaying = true;
             }
             updateHardwareStatus();
+        });
+
+        // Update drone frequency in real-time if changed while playing
+        dronePitchSelect.addEventListener('change', (e) => {
+            if (isDronePlaying && droneOscillator) {
+                droneOscillator.frequency.setValueAtTime(parseFloat(e.target.value), droneContext.currentTime);
+            }
         });
     </script>
 </body>
