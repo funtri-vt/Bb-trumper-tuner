@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Universal Instrument Tuner</title>
+    <title>Universal Tuner & Metronome</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -11,9 +11,11 @@
             --control-bg: #2c2c2c;
             --text-color: #ffffff;
             --accent-color: #f39c12;
+            --accent-hover: #d68910;
             --in-tune-color: #2ecc71;
             --flat-color: #3498db;
             --sharp-color: #e74c3c;
+            --border-radius: 12px;
         }
 
         body {
@@ -29,32 +31,65 @@
             padding: 1rem;
             box-sizing: border-box;
             text-align: center;
+            overflow-x: hidden;
         }
 
-        .tuner-container {
+        /* --- Tabs --- */
+        .tabs {
+            display: flex;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 1rem;
+            background-color: var(--panel-bg);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 1rem;
+            background: none;
+            border: none;
+            color: #888;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .tab-btn.active {
+            background-color: var(--control-bg);
+            color: var(--accent-color);
+            box-shadow: inset 0 -3px 0 var(--accent-color);
+        }
+
+        .app-container {
             background-color: var(--panel-bg);
             padding: 2rem;
-            border-radius: 16px;
+            border-radius: var(--border-radius);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             width: 100%;
-            max-width: 380px;
+            max-width: 400px;
+            box-sizing: border-box;
+            position: relative;
         }
 
-        h1 {
-            margin-top: 0;
-            font-size: 1.4rem;
-            color: var(--accent-color);
-            letter-spacing: 0.5px;
-            margin-bottom: 1.5rem;
+        .panel {
+            display: none;
         }
 
-        .settings-panel {
+        .panel.active {
+            display: block;
+        }
+
+        /* --- Common UI --- */
+        .settings-row {
             display: flex;
             gap: 10px;
             margin-bottom: 1.5rem;
-            background: var(--control-bg);
-            padding: 10px;
-            border-radius: 10px;
         }
 
         .setting-group {
@@ -62,17 +97,20 @@
             display: flex;
             flex-direction: column;
             text-align: left;
+            background: var(--control-bg);
+            padding: 10px;
+            border-radius: 8px;
         }
 
         .setting-group label {
             font-size: 0.75rem;
             color: #aaa;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
-        select {
+        select, input[type="number"] {
             background-color: var(--panel-bg);
             color: white;
             border: 1px solid #444;
@@ -80,14 +118,67 @@
             border-radius: 6px;
             font-size: 0.9rem;
             outline: none;
-            cursor: pointer;
             width: 100%;
+            box-sizing: border-box;
         }
 
-        select:focus {
+        select:focus, input[type="number"]:focus {
             border-color: var(--accent-color);
         }
 
+        .toggle-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #ddd;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 1rem;
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 14px;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 700;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 2px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-danger {
+            background-color: #e74c3c;
+            border-color: #e74c3c;
+            color: white;
+        }
+        
+        .hardware-status {
+            font-size: 0.75rem;
+            color: #666;
+            margin-top: 1.5rem;
+        }
+
+        /* --- Tuner Specific --- */
         .note-display {
             font-size: 5rem;
             font-weight: 800;
@@ -140,381 +231,711 @@
             justify-content: space-between;
             font-size: 0.85rem;
             color: #aaa;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        .button-group {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        /* --- Metronome Specific --- */
+        .bpm-display {
+            font-size: 4.5rem;
+            font-weight: 900;
+            margin: 0;
+            line-height: 1;
+            color: var(--text-color);
         }
 
-        button {
-            background-color: var(--accent-color);
-            color: white;
-            border: none;
-            padding: 14px;
-            font-size: 1rem;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 700;
-            width: 100%;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .btn-secondary {
-            background-color: transparent;
-            border: 2px solid var(--accent-color);
+        .bpm-label {
             color: var(--accent-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 1.5rem;
         }
 
-        .btn-danger {
-            background-color: #e74c3c;
-            border-color: #e74c3c;
+        .bpm-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        .bpm-btn {
+            background-color: var(--control-bg);
             color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+
+        .slider-container {
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: var(--control-bg);
+            border-radius: 4px;
+        }
+
+        .beat-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            min-height: 15px;
+        }
+
+        .beat-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #444;
+            transition: background-color 0.1s;
+        }
+
+        .beat-dot.active {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-color);
         }
         
-        .hardware-status {
-            font-size: 0.75rem;
-            color: #666;
-            margin-top: 1.5rem;
+        .beat-dot.active.accent {
+            background-color: var(--in-tune-color);
+            box-shadow: 0 0 10px var(--in-tune-color);
+        }
+
+        .flash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 9999;
         }
     </style>
 </head>
 <body>
 
-    <div class="tuner-container">
-        <h1>Universal Tuner</h1>
+    <!-- Visual Flash Overlay -->
+    <div class="flash-overlay" id="flashOverlay"></div>
+
+    <div class="tabs">
+        <button class="tab-btn active" data-target="tunerPanel">Tuner</button>
+        <button class="tab-btn" data-target="metronomePanel">Metronome</button>
+    </div>
+
+    <div class="app-container">
         
-        <div class="settings-panel">
-            <div class="setting-group">
-                <label for="transposition">Instrument Key</label>
-                <select id="transposition">
-                    <option value="0">Concert (C, Flute, Piano)</option>
-                    <option value="2" selected>Bb (Trumpet, Clarinet)</option>
-                    <option value="9">Eb (Alto/Bari Sax)</option>
-                    <option value="7">F (French Horn)</option>
-                </select>
+        <!-- ================= TUNER PANEL ================= -->
+        <div id="tunerPanel" class="panel active">
+            <div class="settings-row">
+                <div class="setting-group">
+                    <label for="transposition">Key</label>
+                    <select id="transposition">
+                        <option value="0">C (Concert)</option>
+                        <option value="2">Bb (Trumpet)</option>
+                        <option value="9">Eb (Alto Sax)</option>
+                        <option value="7">F (Horn)</option>
+                    </select>
+                </div>
+                <div class="setting-group">
+                    <label for="dronePitch">Drone</label>
+                    <select id="dronePitch">
+                        <option value="440">A (440 Hz)</option>
+                        <option value="466.16">Bb (466 Hz)</option>
+                        <option value="261.63">C (261 Hz)</option>
+                    </select>
+                </div>
             </div>
-            <div class="setting-group">
-                <label for="dronePitch">Drone Note</label>
-                <select id="dronePitch">
-                    <option value="440">Concert A (440 Hz)</option>
-                    <option value="466.16" selected>Concert Bb (466 Hz)</option>
-                    <option value="261.63">Concert C (261 Hz)</option>
-                </select>
+
+            <div class="note-display" id="note">--</div>
+            <div class="cents" id="cents">0 cents</div>
+            
+            <div class="meter">
+                <div class="needle" id="needle"></div>
+            </div>
+            
+            <div class="status-text">
+                <span>Flat</span>
+                <span>In Tune</span>
+                <span>Sharp</span>
+            </div>
+
+            <div class="button-group">
+                <button id="startTunerBtn">Start Tuner</button>
+                <button id="droneBtn" class="btn-secondary">Play Drone</button>
             </div>
         </div>
 
-        <div class="note-display" id="note">--</div>
-        <div class="cents" id="cents">0 cents</div>
-        
-        <div class="meter">
-            <div class="needle" id="needle"></div>
-        </div>
-        
-        <div class="status-text">
-            <span>Flat</span>
-            <span>In Tune</span>
-            <span>Sharp</span>
+        <!-- ================= METRONOME PANEL ================= -->
+        <div id="metronomePanel" class="panel">
+            <div class="bpm-display" id="bpmDisplay">120</div>
+            <div class="bpm-label">BPM</div>
+            
+            <div class="bpm-controls">
+                <button class="bpm-btn" id="bpmMinus">-</button>
+                <button class="btn-secondary" id="tapTempoBtn" style="width: auto; padding: 10px 20px; font-size: 0.9rem;">Tap Tempo</button>
+                <button class="bpm-btn" id="bpmPlus">+</button>
+            </div>
+
+            <div class="slider-container">
+                <input type="range" id="bpmSlider" min="30" max="300" value="120">
+            </div>
+
+            <div class="beat-indicators" id="beatIndicators">
+                <!-- Dots injected via JS -->
+            </div>
+
+            <div class="settings-row">
+                <div class="setting-group">
+                    <label for="beatsPerBar">Beats / Bar</label>
+                    <input type="number" id="beatsPerBar" min="0" max="12" value="4">
+                </div>
+                <div class="setting-group">
+                    <label for="subdivisions">Subdivision</label>
+                    <select id="subdivisions">
+                        <option value="1">Quarter (1)</option>
+                        <option value="2">Eighth (2)</option>
+                        <option value="3">Triplet (3)</option>
+                        <option value="4">Sixteenth (4)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="settings-row" style="margin-top: -10px; margin-bottom: 20px;">
+                <label class="toggle-group">
+                    <input type="checkbox" id="visualFlashToggle"> Enable Visual Flash
+                </label>
+            </div>
+
+            <div class="button-group">
+                <button id="startMetronomeBtn">Start Metronome</button>
+            </div>
         </div>
 
-        <div class="button-group">
-            <button id="startBtn">Start Tuner</button>
-            <button id="droneBtn" class="btn-secondary">Play Drone</button>
-        </div>
-        
-        <div class="hardware-status" id="hardwareStatus">Mic: Off | Screen Sleep: Default</div>
+        <div class="hardware-status" id="hardwareStatus">Hardware: Idle</div>
     </div>
 
     <script>
-        // --- App Variables ---
+        // ==========================================
+        // GLOBAL APP STATE & PERSISTENCE
+        // ==========================================
+        let appConfig = {
+            activeTab: 'tunerPanel',
+            transposition: '2',
+            dronePitch: '466.16',
+            bpm: 120,
+            beatsPerBar: 4,
+            subdivisions: '1',
+            visualFlash: false
+        };
+
+        const defaultConfig = { ...appConfig };
+
+        function loadConfig() {
+            try {
+                const saved = localStorage.getItem('tunerAppConfig');
+                if (saved) {
+                    appConfig = { ...appConfig, ...JSON.parse(saved) };
+                }
+            } catch (e) { console.warn("Could not load settings."); }
+            applyConfigToUI();
+        }
+
+        function saveConfig() {
+            try {
+                localStorage.setItem('tunerAppConfig', JSON.stringify(appConfig));
+            } catch (e) { console.warn("Could not save settings."); }
+        }
+
+        // Shared Audio Context
+        let audioCtx; 
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        // Shared Wake Lock
         let wakeLock = null;
-
-        // --- Tuner Variables ---
-        let audioContext;
-        let analyser;
-        let microphone;
-        let mediaStream = null; 
-        let isTuning = false;
-        let animationId;
-
-        // --- Drone Variables ---
-        let droneContext;
-        let droneOscillator;
-        let droneGain;
-        let isDronePlaying = false;
-
-        // --- DOM Elements ---
-        const startBtn = document.getElementById('startBtn');
-        const droneBtn = document.getElementById('droneBtn');
-        const noteDisplay = document.getElementById('note');
-        const centsDisplay = document.getElementById('cents');
-        const needle = document.getElementById('needle');
-        const hardwareStatus = document.getElementById('hardwareStatus');
-        const transpositionSelect = document.getElementById('transposition');
-        const dronePitchSelect = document.getElementById('dronePitch');
-
-        const noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-
-        // ==========================================
-        // WAKE LOCK LOGIC (Keep screen awake)
-        // ==========================================
         async function requestWakeLock() {
             if ('wakeLock' in navigator) {
                 try {
                     wakeLock = await navigator.wakeLock.request('screen');
                     updateHardwareStatus();
-                    wakeLock.addEventListener('release', () => {
-                        updateHardwareStatus();
-                    });
-                } catch (err) {
-                    console.error(`Wake Lock error: ${err.name}, ${err.message}`);
-                }
+                    wakeLock.addEventListener('release', updateHardwareStatus);
+                } catch (err) { console.warn(err); }
             }
         }
-
+        function releaseWakeLock() {
+            if (wakeLock && !isTuning && !isDronePlaying && !isMetronomePlaying) {
+                wakeLock.release().then(() => wakeLock = null);
+            }
+            updateHardwareStatus();
+        }
         document.addEventListener('visibilitychange', async () => {
-            if (wakeLock !== null && document.visibilityState === 'visible' && (isTuning || isDronePlaying)) {
+            if (wakeLock !== null && document.visibilityState === 'visible' && (isTuning || isDronePlaying || isMetronomePlaying)) {
                 await requestWakeLock();
             }
         });
 
-        function updateHardwareStatus() {
-            const micState = isTuning ? "<span style='color:var(--in-tune-color)'>Active</span>" : "Off";
-            const screenState = (wakeLock && !wakeLock.released) ? "<span style='color:var(--accent-color)'>Awake</span>" : "Default";
-            hardwareStatus.innerHTML = `Mic: ${micState} | Screen Sleep: ${screenState}`;
-        }
+        // ==========================================
+        // TAB MANAGEMENT
+        // ==========================================
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const panels = document.querySelectorAll('.panel');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const target = btn.getAttribute('data-target');
+                
+                // Stop active features when switching tabs
+                if (target === 'metronomePanel' && isTuning) stopTuning();
+                if (target === 'tunerPanel' && isMetronomePlaying) stopMetronome();
+
+                tabBtns.forEach(b => b.classList.remove('active'));
+                panels.forEach(p => p.classList.remove('active'));
+                
+                btn.classList.add('active');
+                document.getElementById(target).classList.add('active');
+
+                appConfig.activeTab = target;
+                saveConfig();
+            });
+        });
 
         // ==========================================
         // TUNER LOGIC
         // ==========================================
+        let analyser, microphone, mediaStream = null;
+        let isTuning = false, animationId;
+        let droneOscillator, droneGain, isDronePlaying = false;
 
-        startBtn.addEventListener('click', async () => {
-            if (isTuning) {
-                stopTuning();
-            } else {
-                await startTuning();
-            }
-        });
+        const startTunerBtn = document.getElementById('startTunerBtn');
+        const droneBtn = document.getElementById('droneBtn');
+        const noteDisplay = document.getElementById('note');
+        const centsDisplay = document.getElementById('cents');
+        const needle = document.getElementById('needle');
+        const transSelect = document.getElementById('transposition');
+        const dronePitchSelect = document.getElementById('dronePitch');
+        const noteStrings = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
+        startTunerBtn.addEventListener('click', async () => { isTuning ? stopTuning() : await startTuning(); });
+        
         async function startTuning() {
             try {
                 await requestWakeLock();
-
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const ctx = getAudioContext();
                 mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                analyser = audioContext.createAnalyser();
+                analyser = ctx.createAnalyser();
                 analyser.fftSize = 2048;
-                
-                microphone = audioContext.createMediaStreamSource(mediaStream);
+                microphone = ctx.createMediaStreamSource(mediaStream);
                 microphone.connect(analyser);
                 
                 isTuning = true;
-                startBtn.textContent = "Stop Tuner";
-                startBtn.classList.add('btn-danger');
-                startBtn.style.backgroundColor = ""; 
-                
+                startTunerBtn.textContent = "Stop Tuner";
+                startTunerBtn.classList.add('btn-danger');
                 updateHardwareStatus();
                 updatePitch();
-            } catch (err) {
-                alert("Microphone access is required to use the tuner.");
-                console.error(err);
-            }
+            } catch (err) { alert("Mic access required."); }
         }
 
         function stopTuning() {
             isTuning = false;
             cancelAnimationFrame(animationId);
-            
-            if (audioContext) {
-                audioContext.close();
-                audioContext = null;
-            }
-
             if (mediaStream) {
                 mediaStream.getTracks().forEach(track => track.stop());
                 mediaStream = null;
             }
-
-            if (wakeLock && !isDronePlaying) {
-                wakeLock.release().then(() => wakeLock = null);
-            }
-
-            startBtn.textContent = "Start Tuner";
-            startBtn.classList.remove('btn-danger');
+            if (microphone) microphone.disconnect();
             
+            startTunerBtn.textContent = "Start Tuner";
+            startTunerBtn.classList.remove('btn-danger');
             noteDisplay.textContent = "--";
             noteDisplay.style.color = "var(--text-color)";
             centsDisplay.textContent = "0 cents";
             needle.style.left = "50%";
             needle.style.backgroundColor = "white";
-            
-            updateHardwareStatus();
+            releaseWakeLock();
         }
 
+        // Autocorrelation algorithm (from previous implementation)
         function autoCorrelate(buf, sampleRate) {
-            let SIZE = buf.length;
-            let rms = 0;
-
+            let SIZE = buf.length, rms = 0;
             for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
             rms = Math.sqrt(rms / SIZE);
             if (rms < 0.01) return -1;
-
             let r1 = 0, r2 = SIZE - 1, thres = 0.2;
             for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
             for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
-
             buf = buf.slice(r1, r2);
             SIZE = buf.length;
-
             let c = new Array(SIZE).fill(0);
-            for (let i = 0; i < SIZE; i++)
-                for (let j = 0; j < SIZE - i; j++)
-                    c[i] = c[i] + buf[j] * buf[j + i];
-
+            for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] = c[i] + buf[j] * buf[j + i];
             let d = 0; while (c[d] > c[d + 1]) d++;
             let maxval = -1, maxpos = -1;
-            for (let i = d; i < SIZE; i++) {
-                if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
-            }
+            for (let i = d; i < SIZE; i++) if (c[i] > maxval) { maxval = c[i]; maxpos = i; }
             let T0 = maxpos;
-
             let x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
-            let a = (x1 + x3 - 2 * x2) / 2;
-            let b = (x3 - x1) / 2;
+            let a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
             if (a) T0 = T0 - b / (2 * a);
-
             return sampleRate / T0;
         }
 
-        function noteFromPitch(frequency) {
-            const noteNum = 12 * (Math.log(frequency / 440) / Math.log(2));
-            return Math.round(noteNum) + 69; 
-        }
-
-        function frequencyFromNoteNumber(note) {
-            return 440 * Math.pow(2, (note - 69) / 12);
-        }
-
-        function centsOffFromPitch(frequency, note) {
-            return Math.floor(1200 * Math.log(frequency / frequencyFromNoteNumber(note)) / Math.log(2));
-        }
-
         function updatePitch() {
-            if (!analyser) return;
-
+            if (!analyser || !isTuning) return;
             const buffer = new Float32Array(analyser.fftSize);
             analyser.getFloatTimeDomainData(buffer);
-            const ac = autoCorrelate(buffer, audioContext.sampleRate);
+            const ac = autoCorrelate(buffer, audioCtx.sampleRate);
 
             if (ac === -1) {
                 needle.style.opacity = 0.3; 
             } else {
                 needle.style.opacity = 1;
-                let concertPitch = ac;
-                let concertMidiNote = noteFromPitch(concertPitch);
+                let cPitch = ac;
+                let cNote = Math.round(12 * (Math.log(cPitch / 440) / Math.log(2))) + 69;
+                let transOffset = parseInt(appConfig.transposition);
+                let instNote = Math.max(0, cNote + transOffset);
+                let cents = Math.floor(1200 * Math.log(cPitch / (440 * Math.pow(2, (cNote - 69) / 12))) / Math.log(2));
                 
-                // Read transposition dynamically (0 for C, +2 for Bb, etc.)
-                let transOffset = parseInt(transpositionSelect.value);
-                let instrumentMidiNote = concertMidiNote + transOffset;
-                
-                // Keep the midi note positive just in case of extreme low notes
-                if (instrumentMidiNote < 0) instrumentMidiNote = 0;
-
-                let noteName = noteStrings[instrumentMidiNote % 12];
-                let octave = Math.floor(instrumentMidiNote / 12) - 1;
-                let cents = centsOffFromPitch(concertPitch, concertMidiNote);
-                
-                noteDisplay.innerHTML = `${noteName}<span class="octave">${octave}</span>`;
+                noteDisplay.innerHTML = `${noteStrings[instNote % 12]}<span class="octave">${Math.floor(instNote / 12) - 1}</span>`;
                 centsDisplay.textContent = `${cents > 0 ? '+' : ''}${cents} cents`;
 
-                let meterPosition = Math.max(0, Math.min(100, cents + 50));
-                needle.style.left = `${meterPosition}%`;
+                let meterPos = Math.max(0, Math.min(100, cents + 50));
+                needle.style.left = `${meterPos}%`;
 
                 if (Math.abs(cents) <= 5) {
                     needle.style.backgroundColor = "var(--in-tune-color)";
                     noteDisplay.style.color = "var(--in-tune-color)";
-                } else if (cents < -5) {
-                    needle.style.backgroundColor = "var(--flat-color)";
-                    noteDisplay.style.color = "var(--text-color)";
                 } else {
-                    needle.style.backgroundColor = "var(--sharp-color)";
+                    needle.style.backgroundColor = cents < -5 ? "var(--flat-color)" : "var(--sharp-color)";
                     noteDisplay.style.color = "var(--text-color)";
                 }
             }
-
-            if (isTuning) {
-                animationId = requestAnimationFrame(updatePitch);
-            }
+            animationId = requestAnimationFrame(updatePitch);
         }
 
-        // ==========================================
-        // DRONE LOGIC
-        // ==========================================
-
+        // Tuner Drone
         droneBtn.addEventListener('click', async () => {
-            if (!droneContext) {
-                droneContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-
             if (isDronePlaying) {
-                droneGain.gain.setTargetAtTime(0, droneContext.currentTime, 0.05);
-                setTimeout(() => {
-                    droneOscillator.stop();
-                    droneOscillator.disconnect();
-                }, 100);
-                
+                droneGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.05);
+                setTimeout(() => { droneOscillator.stop(); droneOscillator.disconnect(); }, 100);
                 droneBtn.textContent = "Play Drone";
-                droneBtn.classList.add('btn-secondary');
                 droneBtn.classList.remove('btn-danger');
                 isDronePlaying = false;
-                
-                if (!isTuning && wakeLock) {
-                    wakeLock.release().then(() => wakeLock = null);
-                }
+                releaseWakeLock();
             } else {
                 await requestWakeLock();
-
-                if (droneContext.state === 'suspended') droneContext.resume();
-
-                droneOscillator = droneContext.createOscillator();
-                droneGain = droneContext.createGain();
-
+                const ctx = getAudioContext();
+                droneOscillator = ctx.createOscillator();
+                droneGain = ctx.createGain();
                 droneOscillator.type = 'triangle'; 
-                // Read selected frequency
-                droneOscillator.frequency.value = parseFloat(dronePitchSelect.value);
-
-                droneGain.gain.setValueAtTime(0, droneContext.currentTime);
-                droneGain.gain.linearRampToValueAtTime(0.3, droneContext.currentTime + 0.1);
-
+                droneOscillator.frequency.value = parseFloat(appConfig.dronePitch);
+                droneGain.gain.setValueAtTime(0, ctx.currentTime);
+                droneGain.gain.linearRampToValueAtTime(0.3, ctx.currentTime + 0.1);
                 droneOscillator.connect(droneGain);
-                droneGain.connect(droneContext.destination);
+                droneGain.connect(ctx.destination);
                 droneOscillator.start();
-
                 droneBtn.textContent = "Stop Drone";
-                droneBtn.classList.remove('btn-secondary');
                 droneBtn.classList.add('btn-danger');
                 isDronePlaying = true;
             }
             updateHardwareStatus();
         });
 
-        // Update drone frequency in real-time if changed while playing
-        dronePitchSelect.addEventListener('change', (e) => {
-            if (isDronePlaying && droneOscillator) {
-                droneOscillator.frequency.setValueAtTime(parseFloat(e.target.value), droneContext.currentTime);
+        transSelect.addEventListener('change', (e) => { appConfig.transposition = e.target.value; saveConfig(); });
+        dronePitchSelect.addEventListener('change', (e) => { 
+            appConfig.dronePitch = e.target.value; saveConfig();
+            if (isDronePlaying && droneOscillator) droneOscillator.frequency.setValueAtTime(parseFloat(e.target.value), audioCtx.currentTime);
+        });
+
+        // ==========================================
+        // METRONOME LOGIC
+        // ==========================================
+        let isMetronomePlaying = false;
+        let currentBeatInBar = 0;
+        let currentSubdivision = 0;
+        let nextNoteTime = 0.0;
+        let timerID;
+        let notesInQueue = []; 
+
+        const scheduleAheadTime = 0.1; 
+        const lookahead = 25.0; 
+
+        const startMetronomeBtn = document.getElementById('startMetronomeBtn');
+        const bpmDisplay = document.getElementById('bpmDisplay');
+        const bpmSlider = document.getElementById('bpmSlider');
+        const bpmMinus = document.getElementById('bpmMinus');
+        const bpmPlus = document.getElementById('bpmPlus');
+        const tapTempoBtn = document.getElementById('tapTempoBtn');
+        const beatsInput = document.getElementById('beatsPerBar');
+        const subSelect = document.getElementById('subdivisions');
+        const beatIndicators = document.getElementById('beatIndicators');
+        const visualFlashToggle = document.getElementById('visualFlashToggle');
+        const flashOverlay = document.getElementById('flashOverlay');
+
+        function updateBpm(newBpm) {
+            let b = Math.max(30, Math.min(300, newBpm));
+            appConfig.bpm = b;
+            bpmDisplay.textContent = b;
+            bpmSlider.value = b;
+            saveConfig();
+        }
+
+        bpmSlider.addEventListener('input', (e) => updateBpm(e.target.value));
+        bpmMinus.addEventListener('click', () => updateBpm(appConfig.bpm - 1));
+        bpmPlus.addEventListener('click', () => updateBpm(appConfig.bpm + 1));
+
+        beatsInput.addEventListener('change', (e) => {
+            appConfig.beatsPerBar = parseInt(e.target.value) || 0;
+            saveConfig();
+            drawBeatDots();
+        });
+
+        subSelect.addEventListener('change', (e) => {
+            appConfig.subdivisions = e.target.value;
+            saveConfig();
+        });
+
+        visualFlashToggle.addEventListener('change', (e) => {
+            appConfig.visualFlash = e.target.checked;
+            saveConfig();
+        });
+
+        // Tap Tempo Logic
+        let tapTimes = [];
+        tapTempoBtn.addEventListener('click', () => {
+            const now = performance.now();
+            if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > 2000) {
+                tapTimes = []; // Reset if 2 seconds passed since last tap
+            }
+            tapTimes.push(now);
+            if (tapTimes.length > 4) tapTimes.shift();
+
+            if (tapTimes.length > 1) {
+                let sum = 0;
+                for (let i = 1; i < tapTimes.length; i++) {
+                    sum += (tapTimes[i] - tapTimes[i - 1]);
+                }
+                let avg = sum / (tapTimes.length - 1);
+                updateBpm(Math.round(60000 / avg));
+            }
+            
+            // Visual feedback for tap button
+            tapTempoBtn.style.backgroundColor = "var(--accent-color)";
+            tapTempoBtn.style.color = "white";
+            setTimeout(() => {
+                tapTempoBtn.style.backgroundColor = "transparent";
+                tapTempoBtn.style.color = "var(--accent-color)";
+            }, 100);
+        });
+
+        function drawBeatDots() {
+            beatIndicators.innerHTML = '';
+            if (appConfig.beatsPerBar <= 0) return;
+            for (let i = 0; i < appConfig.beatsPerBar; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'beat-dot';
+                dot.id = `beatDot-${i}`;
+                beatIndicators.appendChild(dot);
+            }
+        }
+
+        function nextNote() {
+            const secondsPerBeat = 60.0 / appConfig.bpm;
+            const subs = parseInt(appConfig.subdivisions);
+            const secondsPerSub = secondsPerBeat / subs;
+            nextNoteTime += secondsPerSub;
+
+            currentSubdivision++;
+            if (currentSubdivision === subs) {
+                currentSubdivision = 0;
+                currentBeatInBar++;
+                if (appConfig.beatsPerBar > 0 && currentBeatInBar >= appConfig.beatsPerBar) {
+                    currentBeatInBar = 0;
+                }
+            }
+        }
+
+        function scheduleNote(beatNumber, subNumber, time) {
+            notesInQueue.push({ note: beatNumber, sub: subNumber, time: time });
+
+            const ctx = getAudioContext();
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+
+            osc.connect(gainNode);
+            gainNode.connect(ctx.destination);
+
+            if (subNumber === 0) {
+                // Main beat
+                if (beatNumber === 0 && appConfig.beatsPerBar > 0) {
+                    osc.frequency.value = 1200; // Ding!
+                    gainNode.gain.setValueAtTime(0.8, time);
+                } else {
+                    osc.frequency.value = 800;  // Click
+                    gainNode.gain.setValueAtTime(0.6, time);
+                }
+            } else {
+                // Subdivision
+                osc.frequency.value = 400; // Low click
+                gainNode.gain.setValueAtTime(0.2, time);
+            }
+
+            osc.start(time);
+            osc.stop(time + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
+        }
+
+        function scheduler() {
+            while (nextNoteTime < getAudioContext().currentTime + scheduleAheadTime) {
+                scheduleNote(currentBeatInBar, currentSubdivision, nextNoteTime);
+                nextNote();
+            }
+            timerID = setTimeout(scheduler, lookahead);
+        }
+
+        // Draw Loop to sync UI with Audio Clock
+        let lastBeatDrawn = -1;
+        function drawMetronomeUI() {
+            if (!isMetronomePlaying) return;
+            let drawNote = lastBeatDrawn;
+            const currentTime = getAudioContext().currentTime;
+
+            // Find the active note in queue
+            while (notesInQueue.length && notesInQueue[0].time < currentTime) {
+                drawNote = notesInQueue[0];
+                notesInQueue.splice(0, 1);
+            }
+
+            if (drawNote !== lastBeatDrawn) {
+                // Flash Overlay (Only on main beat 0, if toggled)
+                if (drawNote.sub === 0 && appConfig.visualFlash) {
+                    flashOverlay.style.transition = 'none';
+                    flashOverlay.style.opacity = drawNote.note === 0 && appConfig.beatsPerBar > 0 ? '0.6' : '0.2';
+                    
+                    // Force reflow
+                    void flashOverlay.offsetWidth;
+                    
+                    flashOverlay.style.transition = 'opacity 0.15s ease-out';
+                    flashOverlay.style.opacity = '0';
+                }
+
+                // Update Dots
+                if (drawNote.sub === 0 && appConfig.beatsPerBar > 0) {
+                    document.querySelectorAll('.beat-dot').forEach(d => d.classList.remove('active', 'accent'));
+                    const activeDot = document.getElementById(`beatDot-${drawNote.note}`);
+                    if (activeDot) {
+                        activeDot.classList.add('active');
+                        if (drawNote.note === 0) activeDot.classList.add('accent');
+                    }
+                }
+                lastBeatDrawn = drawNote;
+            }
+            requestAnimationFrame(drawMetronomeUI);
+        }
+
+        startMetronomeBtn.addEventListener('click', async () => {
+            if (isMetronomePlaying) {
+                stopMetronome();
+            } else {
+                await requestWakeLock();
+                const ctx = getAudioContext();
+                isMetronomePlaying = true;
+                currentBeatInBar = 0;
+                currentSubdivision = 0;
+                notesInQueue = [];
+                nextNoteTime = ctx.currentTime + 0.05;
+                
+                startMetronomeBtn.textContent = "Stop Metronome";
+                startMetronomeBtn.classList.add('btn-danger');
+                
+                drawBeatDots();
+                scheduler();
+                requestAnimationFrame(drawMetronomeUI);
+                updateHardwareStatus();
             }
         });
+
+        function stopMetronome() {
+            isMetronomePlaying = false;
+            clearTimeout(timerID);
+            startMetronomeBtn.textContent = "Start Metronome";
+            startMetronomeBtn.classList.remove('btn-danger');
+            document.querySelectorAll('.beat-dot').forEach(d => d.classList.remove('active', 'accent'));
+            releaseWakeLock();
+        }
+
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        function applyConfigToUI() {
+            // Restore Tab
+            tabBtns.forEach(b => b.classList.remove('active'));
+            panels.forEach(p => p.classList.remove('active'));
+            document.querySelector(`[data-target="${appConfig.activeTab}"]`).classList.add('active');
+            document.getElementById(appConfig.activeTab).classList.add('active');
+
+            // Restore Tuner Settings
+            transSelect.value = appConfig.transposition;
+            dronePitchSelect.value = appConfig.dronePitch;
+
+            // Restore Metronome Settings
+            bpmDisplay.textContent = appConfig.bpm;
+            bpmSlider.value = appConfig.bpm;
+            beatsInput.value = appConfig.beatsPerBar;
+            subSelect.value = appConfig.subdivisions;
+            visualFlashToggle.checked = appConfig.visualFlash;
+            
+            drawBeatDots();
+        }
+
+        function updateHardwareStatus() {
+            let activeTasks = [];
+            if (isTuning) activeTasks.push("Mic");
+            if (isDronePlaying) activeTasks.push("Drone");
+            if (isMetronomePlaying) activeTasks.push("Metronome");
+            
+            const state = activeTasks.length > 0 ? activeTasks.join(", ") : "Idle";
+            const screenState = (wakeLock && !wakeLock.released) ? "<span style='color:var(--accent-color)'>Awake</span>" : "Default";
+            document.getElementById('hardwareStatus').innerHTML = `State: ${state} | Screen: ${screenState}`;
+        }
+
+        // Run on load
+        loadConfig();
+
     </script>
 </body>
 </html>
